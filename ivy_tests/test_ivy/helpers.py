@@ -2920,6 +2920,8 @@ def get_axis(
     unique=True,
     min_size=1,
     max_size=None,
+    min_value=None,
+    max_value=None,
     force_tuple=False,
     force_int=False,
 ):
@@ -2978,6 +2980,13 @@ def get_axis(
     if max_size is None and unique:
         max_size = max(axes, min_size)
 
+    min_value = -axes if min_value is None else min(axes - 1, max(min_value, -axes))
+    max_value = axes - 1 if max_value is None else max(-axes, min(max_value, axes - 1))
+
+    assert not (
+        min_value > max_value
+    ), f"Got min_value ({min_value}) larger than max_value ({max_value})"
+
     valid_strategies = []
 
     if allow_none:
@@ -2987,7 +2996,7 @@ def get_axis(
         if axes == 0:
             valid_strategies.append(st.just(0))
         else:
-            valid_strategies.append(st.integers(-axes, axes - 1))
+            valid_strategies.append(st.integers(min_value, max_value))
     if not force_int:
         if axes == 0:
             valid_strategies.append(
@@ -2996,7 +3005,7 @@ def get_axis(
         else:
             valid_strategies.append(
                 st.lists(
-                    st.integers(-axes, axes - 1),
+                    st.integers(min_value, max_value),
                     min_size=min_size,
                     max_size=max_size,
                     unique_by=unique_by,
